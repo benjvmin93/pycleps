@@ -8,8 +8,8 @@ def main():
     parser = argparse.ArgumentParser(description="Cleps Job Submission Tool")
     parser.add_argument("--username", help="Your Cleps username")
     parser.add_argument("--repo", required=True, help="Repository address (e.g., git@github.com:user/repo.git)")
-    parser.add_argument("--working-dir", default="wd", help="Working directory (default: 'wd')")
-    parser.add_argument("--script-name", required=True, help="The name of the script in the git repo that will be run on the cluster")
+    parser.add_argument("--wd", default="wd", help="Working directory where the git repo will be copied (default: 'wd')")
+    parser.add_argument("--script", required=True, help="The name of the script in the git repo that will be run on the cluster")
     
     args = parser.parse_args()
 
