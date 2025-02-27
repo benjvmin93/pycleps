@@ -1,16 +1,16 @@
 from helpers import SlurmOptions, SbatchHeader
 
 import paramiko
-from getpass import getpass
+from getpass import getuser, getpass
 from pathlib import Path
 from scp import SCPClient
 import io
 
 class ClepsSSHWrapper:
-    def __init__(self, hostname: str, username: str, public_key: str = None):
+    def __init__(self, hostname: str, username: str | None = None, public_key: str = None):
         """Init an SSH client connected to the given host"""
         if not username:
-            username = input("Enter your Cleps username: ")
+            username = getuser()
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -19,7 +19,7 @@ class ClepsSSHWrapper:
         self.client = client
         self.username = username
 
-    def clone_repo(self, repo_addr: str | Path, script_name: str, dst_dir: Path = "~/") -> None:
+    def clone_repo(self, repo_addr: str | Path, dst_dir: Path = "~/") -> None:
         """Clone repository from github or transfer it from your machine to the cluster."""
         if repo_addr.startswith("git@github.com") or repo_addr.startswith("https://"):  # Clone repo from github
             print("Cloning repository from Github...")
@@ -30,17 +30,6 @@ class ClepsSSHWrapper:
             self.client.exec_command(f"mkdir -p {dst_dir}")
             with SCPClient(self.client.get_transport()) as scp:
                 scp.put(Path(repo_addr), recursive=True, remote_path=dst_dir)
-
-        # Check if the script to run exists in the cloned repo
-        cmd = f"find {dst_dir} -type f -name {script_name}"
-        _, stdout, stderr = self.client.exec_command(cmd)
-        output = stdout.read().decode().strip()
-        error = stderr.read().decode().strip()
-
-        if not output:
-            raise FileNotFoundError(f"Error: The script '{script_name}' was not found in the repository. Details: {error}")
-
-        return output
 
     def send_job(self, run_cmd: str, working_dir: Path, slurm_options: SlurmOptions, sbatch_options: SbatchHeader) -> None:
         """Schedule a job that will run your script on the cluster."""
