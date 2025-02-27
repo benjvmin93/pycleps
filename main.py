@@ -9,7 +9,9 @@ def main():
     parser.add_argument("--username", help="Your Cleps username")
     parser.add_argument("--repo", required=True, help="Repository address (e.g., git@github.com:user/repo.git)")
     parser.add_argument("--wd", default=".", help="Working directory where the git repo will be copied (default: '.')")
-    parser.add_argument("--script", required=True, help="The name of the script in the git repo that will be run on the cluster")
+    parser.add_argument("--script", required=True, help="The command that will be used to run your script")
+    parser.add_argument("--env", required=False, help="The command that will be used to set your jobs in the right environment. The environment should already be created within the cluster.")
+
     
     args = parser.parse_args()
 
@@ -18,6 +20,7 @@ def main():
     repo_addr = args.repo
     working_dir = args.wd
     script_name = args.script
+    env_cmd = args.env
 
     repo_name = repo_addr
     if repo_addr.startswith("https://") or repo_addr.startswith("git@github.com"):
@@ -45,7 +48,8 @@ def main():
             run_cmd=script_name,
             working_dir=repo_path,
             slurm_options=slurm_options,
-            sbatch_options=sbatch_options
+            sbatch_options=sbatch_options,
+            env_cmd=env
         )
     except Exception as e:
         print(f"An error occurred: {e}")

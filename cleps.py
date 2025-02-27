@@ -31,7 +31,7 @@ class ClepsSSHWrapper:
             with SCPClient(self.client.get_transport()) as scp:
                 scp.put(Path(repo_addr), recursive=True, remote_path=dst_dir)
 
-    def send_job(self, run_cmd: str, working_dir: Path, slurm_options: SlurmOptions, sbatch_options: SbatchHeader) -> None:
+    def send_job(self, run_cmd: str, working_dir: Path, slurm_options: SlurmOptions, sbatch_options: SbatchHeader, env_cmd: str | None = None) -> None:
         """Schedule a job that will run your script on the cluster."""
         slurm_script_path = working_dir / "slurm_job.batch"
         slurm_directives = slurm_options.to_slurm_directives()
@@ -39,8 +39,10 @@ class ClepsSSHWrapper:
 
 {slurm_directives}
 
+source ~/.bashrc
+{env_cmd if env_cmd is not None else ""}
+
 {run_cmd}
-mkdir -p {working_dir}
 """
         with SCPClient(self.client.get_transport()) as scp:
             scp.putfo(
