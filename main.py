@@ -8,7 +8,7 @@ def main():
     parser = argparse.ArgumentParser(description="Cleps Job Submission Tool")
     parser.add_argument("--username", help="Your Cleps username")
     parser.add_argument("--repo", required=True, help="Repository address (e.g., git@github.com:user/repo.git)")
-    parser.add_argument("--wd", default="wd", help="Working directory where the git repo will be copied (default: 'wd')")
+    parser.add_argument("--wd", default=".", help="Working directory where the git repo will be copied (default: '.')")
     parser.add_argument("--script", required=True, help="The name of the script in the git repo that will be run on the cluster")
     
     args = parser.parse_args()
@@ -16,22 +16,23 @@ def main():
     # Extract arguments
     username = args.username
     repo_addr = args.repo
-    working_dir = args.working_dir
-    script_name = args.script_name
+    working_dir = args.wd
+    script_name = args.script
 
     repo_name = repo_addr
     if repo_addr.startswith("https://") or repo_addr.startswith("git@github.com"):
         repo_name = repo_addr.split("/")[-1].replace(".git", "")
 
     working_dir = Path(working_dir)
+    working_dir.mkdir(exist_ok=True)
     repo_path = working_dir / repo_name
 
     # Initialize ClepsSSHWrapper
     client = ClepsSSHWrapper("cleps.inria.fr", username=username)
 
     try:
-        # Clone the repository and return the path of the script that will be run
-        script_path = client.clone_repo(repo_addr=repo_addr, dst_dir=working_dir, script_name=script_name)
+        # Clone the repository
+        client.clone_repo(repo_addr=repo_addr, dst_dir=working_dir)
 
         # Define Slurm options
         slurm_options = SlurmOptions(
@@ -41,8 +42,8 @@ def main():
         sbatch_options = SbatchHeader(account=username)
 
         client.send_job(
-            run_cmd=f"python {script_path}",
-            working_dir=working_dir,
+            run_cmd=script_name,
+            working_dir=repo_path,
             slurm_options=slurm_options,
             sbatch_options=sbatch_options
         )
