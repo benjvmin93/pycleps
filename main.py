@@ -8,10 +8,9 @@ def main():
     parser = argparse.ArgumentParser(description="Cleps Job Submission Tool")
     parser.add_argument("--username", help="Your Cleps username")
     parser.add_argument("--repo", required=True, help="Repository address (e.g., git@github.com:user/repo.git)")
-    parser.add_argument("--wd", default=".", help="Working directory where the git repo will be copied (default: '.')")
+    parser.add_argument("--wd", default="~/", help="Working directory where the git repo will be copied (default: '.')")
     parser.add_argument("--script", required=True, help="The command that will be used to run your script")
     parser.add_argument("--env", required=False, help="The command that will be used to set your jobs in the right environment. The environment should already be created within the cluster.")
-
     
     args = parser.parse_args()
 
@@ -19,7 +18,7 @@ def main():
     username = args.username
     repo_addr = args.repo
     working_dir = args.wd
-    script_name = args.script
+    script = args.script
     env_cmd = args.env
 
     repo_name = repo_addr
@@ -39,13 +38,13 @@ def main():
 
         # Define Slurm options
         slurm_options = SlurmOptions(
-            job_name=f"{script_name.split('.')[0]}",
+            job_name=f"{repo_name}-job",
             output=f"{working_dir}/outputs"
         )
         sbatch_options = SbatchHeader(account=username)
 
         client.send_job(
-            run_cmd=script_name,
+            run_cmd=script,
             working_dir=repo_path,
             slurm_options=slurm_options,
             sbatch_options=sbatch_options,
