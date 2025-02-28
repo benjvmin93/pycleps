@@ -49,7 +49,7 @@ def main():
             working_dir=repo_path,
             slurm_options=slurm_options,
             sbatch_options=sbatch_options,
-            env_cmd=env
+            env_cmd=env_cmd
         )
     except Exception as e:
         print(f"An error occurred: {e}")
