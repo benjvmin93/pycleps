@@ -11,7 +11,9 @@ def main():
     parser.add_argument("--wd", default=".", help="Working directory where the git repo will be copied (default: '.')")
     parser.add_argument("--script", required=True, help="The command that will be used to run your script")
     parser.add_argument("--env", required=False, help="The command that will be used to set your jobs in the right environment. The environment should already be created within the cluster.")
+    parser.add_argument("--cpus-per-task", default="", required=False, help="Number of cpus required to run your simulations")
     
+
     args = parser.parse_args()
 
     # Extract arguments
@@ -20,6 +22,7 @@ def main():
     working_dir = args.wd
     script = args.script
     env_cmd = args.env
+    cpus_per_tasks = args.cpus_per_task
 
     repo_name = repo_addr
     if repo_addr.startswith("https://") or repo_addr.startswith("git@github.com"):
@@ -40,7 +43,8 @@ def main():
         # Define Slurm options
         slurm_options = SlurmOptions(
             job_name=f"{repo_name}-job",
-            output=f"{working_dir}/outputs"
+            cpus_per_task=cpus_per_tasks,
+            output=f"{working_dir}/outputs",
         )
         sbatch_options = SbatchHeader()
 
