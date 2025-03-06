@@ -6,6 +6,8 @@ from getpass import getuser, getpass
 from pathlib import Path
 from scp import SCPClient
 import io
+import re
+import time
 
 class ClepsSSHWrapper:
     def __init__(self, hostname: str, username: str | None = None, public_key: str = None):
@@ -17,18 +19,18 @@ class ClepsSSHWrapper:
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         password = getpass("Enter your Cleps password: ")
         client.connect(hostname=hostname, username=username, password=password)
+
         self.client = client
         self.username = username
 
-    def exec_cmd(self, cmd: str) -> None:
+    def exec_cmd(self, cmd: str) -> str:
         _, stdout, stderr = self.client.exec_command(cmd)
 
         err = stderr.read().decode()
         if err:
             raise Exception(err)
 
-        out = stdout.read().decode()
-        print(out)
+        return stdout.read().decode()
 
     def clone_repo(self, repo_addr: str | Path, dst_dir: Path = "~/") -> None:
         """Clone repository from github or transfer it from your machine to the cluster."""
@@ -65,4 +67,30 @@ source ~/.bashrc
                 io.StringIO(slurm_script), slurm_script_path
             )
         cmd = f"sbatch {sbatch_options} {slurm_script_path}"
-        self.exec_cmd(cmd)
+        out = self.exec_cmd(cmd)
+        print(out)
+        splitted = out.split(' ')   # Extracts job ID and returns it
+        jobId = splitted[-1].strip(" \n")
+        return jobId
+
+    def wait(self, jobId: str) -> None:
+        print(f"Waiting for job {jobId}...")
+        while True:
+            out = self.exec_cmd(f"scontrol show job {jobId}")
+            m = re.search(r"JobState=(\w+)", out)
+            state = ""
+            if m:
+                state = m.group(1)
+            else:
+                raise Exception("Error while parsing scontrol output {out}")
+            print(f"\t{state}")
+            if state != "RUNNING":
+                break
+            time.sleep(10)
+
+        outputs = self.exec_cmd(f"cat outputs/*{jobId}*")
+        print(outputs)
+        
+
+            
+            
