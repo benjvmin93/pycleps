@@ -31,7 +31,7 @@ class SlurmOptions:
 
     def to_slurm_directives(self) -> str:
         """Generate SLURM directives as a string."""
-        output_suff = "%x_%j.log"
+        output_suff = "%j.log"
         options_dict = {
             "job-name": self.job_name,
             "time": self.time,
@@ -44,7 +44,6 @@ class SlurmOptions:
             "error": self.error,
         }
         options_dict.update(self.other_options)
-
         directives = [ f"#SBATCH --{key}={value}" for key, value in options_dict.items() if value != "" and value != None ]
         return "\n".join(directives)
 
@@ -52,7 +51,7 @@ class SbatchHeader:
     """A helper class to generate sbatch command-line options."""
     def __init__(self, account: str = "", qos: str = None,
                  dependency: str = "", mail_user: str = "",
-                 mail_type: str = None, other_options: dict[str, str] = None):
+                 mail_type: str = None, wait: bool = False, other_options: dict[str, str] = None):
         """
         Initialize sbatch command-line options.
 
@@ -69,6 +68,7 @@ class SbatchHeader:
         self.dependency = dependency
         self.mail_user = mail_user
         self.mail_type = mail_type
+        self.wait = wait
         self.other_options = other_options or {}
 
     def __str__(self) -> str:
@@ -87,6 +87,8 @@ class SbatchHeader:
             options.append(f"--mail-user={self.mail_user}")
         if self.mail_type:
             options.append(f"--mail-type={self.mail_type}")
+        if self.wait:
+            options.append("--wait")
         for key, value in self.other_options.items():
             options.append(f"--{key}={value}")
         return " ".join(options)

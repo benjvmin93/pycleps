@@ -2,8 +2,9 @@ import argparse
 from cleps import ClepsSSHWrapper
 from pathlib import Path
 from helpers import SlurmOptions, SbatchHeader
+import asyncio
 
-def main():
+async def main():
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Cleps Job Submission Tool")
     parser.add_argument("--username", help="Your Cleps username")
@@ -31,9 +32,10 @@ def main():
     repo_name = repo_addr
     if repo_addr.startswith("https://") or repo_addr.startswith("git@github.com"):
         repo_name = repo_addr.split("/")[-1].replace(".git", "")
+    else:
+        repo_name = "".join(repo_name.split("/")).strip()
 
     working_dir = Path(working_dir)
-    # working_dir.mkdir(exist_ok=True)
     repo_path = working_dir / repo_name
 
     # Initialize ClepsSSHWrapper
@@ -46,11 +48,11 @@ def main():
 
         # Define Slurm options
         slurm_options = SlurmOptions(
-            job_name=f"{repo_name}-job",
+            job_name=repo_name,
             cpus_per_task=cpus_per_tasks,
-            output=f"{working_dir}/outputs",
+            output=repo_path / "outputs",
         )
-        sbatch_options = SbatchHeader()
+        sbatch_options = SbatchHeader(wait=wait)
 
         jobId = client.send_job(
             run_cmd=script,
@@ -60,10 +62,10 @@ def main():
             env_cmd=env_cmd
         )
 
-        if wait:
-            client.wait(jobId)
+        print(await client.get_output(repo_path, jobId))
+
     except Exception as e:
         print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

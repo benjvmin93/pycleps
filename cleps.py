@@ -2,6 +2,7 @@ from helpers import SlurmOptions, SbatchHeader
 import sys
 
 import paramiko
+import asyncio
 from getpass import getuser, getpass
 from pathlib import Path
 from scp import SCPClient
@@ -44,7 +45,6 @@ class ClepsSSHWrapper:
             except Exception as e:  # Eventually, the repo already exists in the cluster machine
                 print(e)
         else:   # Transfer the repo from local machine
-            self.exec_cmd(f"mkdir -p {dst_dir}")
             with SCPClient(self.client.get_transport()) as scp:
                 scp.put(Path(repo_addr), recursive=True, remote_path=dst_dir)
             print(f"Repository copied from local machine as {dst_dir}")
@@ -73,8 +73,8 @@ source ~/.bashrc
         jobId = splitted[-1].strip(" \n")
         return jobId
 
-    def wait(self, jobId: str) -> None:
-        print(f"Waiting for job {jobId}...")
+    async def get_output(self, repo_path: Path, jobId: str) -> str:
+        """Asynchronously wait for the job to finish if it is not, otherwise get the output of the job and returns it."""
         while True:
             out = self.exec_cmd(f"scontrol show job {jobId}")
             m = re.search(r"JobState=(\w+)", out)
@@ -82,15 +82,14 @@ source ~/.bashrc
             if m:
                 state = m.group(1)
             else:
-                raise Exception("Error while parsing scontrol output {out}")
-            print(f"\t{state}")
-            if state != "RUNNING":
+                raise Exception(f"Error while parsing scontrol output {out}")
+            if state != "RUNNING" and state != "PENDING":
                 break
-            time.sleep(10)
+            await asyncio.sleep(1)  # Non-blocking sleep
 
-        outputs = self.exec_cmd(f"cat outputs/*{jobId}*")
-        print(outputs)
-        
+        print(f"Job {jobId} {state}")
+        print("Output:")
 
-            
-            
+        job_path = repo_path / "outputs" / f"{jobId}.log"
+        outputs = self.exec_cmd(f"cat {job_path}")
+        return outputs
