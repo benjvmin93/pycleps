@@ -1,7 +1,7 @@
 import argparse
-from cleps import ClepsSSHWrapper
+from pycleps.cleps_ssh_wrapper import ClepsSSHWrapper
 from pathlib import Path
-from helpers import SlurmOptions, SbatchHeader
+from pycleps.helpers import SlurmOptions, SbatchHeader
 import asyncio
 
 async def main():
