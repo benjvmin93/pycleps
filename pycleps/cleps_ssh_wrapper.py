@@ -1,4 +1,4 @@
-from helpers import SlurmOptions, SbatchHeader
+from pycleps.helpers import SlurmOptions, SbatchHeader
 import sys
 
 import paramiko
