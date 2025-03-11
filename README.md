@@ -20,5 +20,5 @@ You can run your simulations located either on Github or on your local machine.
 - `--wd` is the working directory where pycleps will clone your repo
 - `--script` is the script that will be used to run your experiment
 - `--env` is the command that will be used to put you in the right environment for your experiment
-- `--wait` will not exit the program until your simulation is not done
+- `--wait` will not exit the program until your simulation is not done. If this flag is set, pycleps will automatically fetch your experiment's results when they are done.
 - `--array` is an options to specify different parameters for your experiments. It will create multiple tasks with these different arguments. Can either be a range a-b or a list form 1,2,3,4,...
