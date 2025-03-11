@@ -34,7 +34,7 @@ class ClepsSSHWrapper:
         return stdout.read().decode()
 
     def clone_repo(self, repo_addr: str | Path, dst_dir: Path = "~/") -> None:
-        """Clone repository from github or transfer it from your machine to the cluster."""
+        """Clone repository from github or transfer it from your machine to the cluster"""
         if repo_addr.startswith("git@github.com") or repo_addr.startswith("https://"):  # Clone repo from github
             print("Cloning repository from Github...")
             repo_name = repo_addr.split("/")[-1].replace(".git", "")
@@ -49,8 +49,8 @@ class ClepsSSHWrapper:
                 scp.put(Path(repo_addr), recursive=True, remote_path=dst_dir)
             print(f"Repository copied from local machine as {dst_dir}")
 
-    def send_job(self, run_cmd: str, working_dir: Path, slurm_options: SlurmOptions, sbatch_options: SbatchHeader, env_cmd: str | None = None) -> None:
-        """Schedule a job that will run your script on the cluster."""
+    def send_job(self, run_cmd: str, working_dir: Path, slurm_options: SlurmOptions, sbatch_options: SbatchHeader, env_cmd: str | None = None) -> str:
+        """Schedule a job that will run your script on the cluster and returns the job ID of your experiment."""
         slurm_script_path = working_dir / "slurm_job.sbatch"
         slurm_directives = slurm_options.to_slurm_directives()
         slurm_script = f"""#!/bin/bash
@@ -60,7 +60,7 @@ class ClepsSSHWrapper:
 source ~/.bashrc
 {env_cmd if env_cmd is not None else ""}
 
-{run_cmd}
+{run_cmd} {"${SLURM_ARRAY_TASK_ID}" if sbatch_options.array else ""}
 """
         with SCPClient(self.client.get_transport()) as scp:
             scp.putfo(
@@ -73,23 +73,28 @@ source ~/.bashrc
         jobId = splitted[-1].strip(" \n")
         return jobId
 
-    async def get_output(self, repo_path: Path, jobId: str) -> str:
-        """Asynchronously wait for the job to finish if it is not, otherwise get the output of the job and returns it."""
-        while True:
-            out = self.exec_cmd(f"scontrol show job {jobId}")
-            m = re.search(r"JobState=(\w+)", out)
-            state = ""
-            if m:
-                state = m.group(1)
-            else:
-                raise Exception(f"Error while parsing scontrol output {out}")
-            if state != "RUNNING" and state != "PENDING":
-                break
-            await asyncio.sleep(1)  # Non-blocking sleep
+    def get_output(self, repo_path: Path, jobId: str) -> list[tuple[str, Path]]:
+        """Get the stdout paths of each scheduled tasks according to the job id. Used when we waited for the job to complete."""
+        out = self.exec_cmd(f"scontrol show job {jobId}")
+        ids = []
+        
+        # Use regex to find all ArrayTaskId and StdOut pairs
+        task_info = re.findall(r"ArrayTaskId=(\d+).*?StdOut=(\S+)", out, re.DOTALL)
+        if not task_info:
+            # If no ArrayTaskId is found, fall back to single JobId and StdOut
+            task_info = re.findall(r"JobId=(\d+).*?StdOut=(\S+)", out, re.DOTALL)
 
-        print(f"Job {jobId} {state}")
-        print("Output:")
+        if not task_info:
+            raise Exception(f"Error parsing scontrol output: {out}")
 
-        job_path = repo_path / "outputs" / f"{jobId}.log"
-        outputs = self.exec_cmd(f"cat {job_path}")
-        return outputs
+        return [(id, path) for id, path in task_info]    # List of (id, stdout_path)
+
+    def fetch_outputs(self, jobs: list[tuple[str, Path]], local_path: Path = '.') -> None:
+        print(f"Attempting to fetch {len(jobs)} results...")
+        file_paths = []
+        with SCPClient(self.client.get_transport()) as scp:
+            for job, path in jobs:
+                scp.get(path, local_path)
+                file_paths.append(path)
+
+        print(f"{len(file_paths)} files have been successfully fetched:\n\t{'/n/t'.join(file_paths)}")
