@@ -33,6 +33,37 @@ class ClepsSSHWrapper:
 
         return stdout.read().decode()
 
+    def setup_env(self, env_file: Path, env_install_cmd: str) -> str:
+        """Create a conda environment regarding the environment file path and returns the name of the environment."""
+        # Extract environment name from env file and check if it already exists.
+        out = self.exec_cmd(f"cat {env_file}")
+        lines = out.splitlines()
+        first_line = lines[0]
+        name = first_line.split(":")[-1].strip()
+
+        env_names = self.exec_cmd("conda env list")
+        env_names = env_names.splitlines()
+        exists = False
+        for n in env_names:
+            if name in n:
+                exists = True
+                print(f"Found environment {name}.")
+                break
+
+        if not exists:
+            print(f"Setting up environment from {env_file}...")
+            out = self.exec_cmd(f"conda env create -f {env_file}")
+            print(out)
+        
+        # Install project dependencies.
+        out = self.exec_cmd(f"conda activate {name}")
+        print(out)
+
+        out = self.exec_cmd(env_install_cmd)
+        print(out)
+
+        return name
+
     def clone_repo(self, repo_addr: str | Path, dst_dir: Path = "~/") -> None:
         """Clone repository from github or transfer it from your machine to the cluster"""
         if repo_addr.startswith("git@github.com") or repo_addr.startswith("https://"):  # Clone repo from github
@@ -49,7 +80,7 @@ class ClepsSSHWrapper:
                 scp.put(Path(repo_addr), recursive=True, remote_path=dst_dir)
             print(f"Repository copied from local machine as {dst_dir}")
 
-    def send_job(self, run_cmd: str, working_dir: Path, slurm_options: SlurmOptions, sbatch_options: SbatchHeader, env_cmd: str | None = None) -> str:
+    def send_job(self, run_cmd: str, working_dir: Path, slurm_options: SlurmOptions, sbatch_options: SbatchHeader, env_name: str) -> str:
         """Schedule a job that will run your script on the cluster and returns the job ID of your experiment."""
         slurm_script_path = working_dir / "slurm_job.sbatch"
         slurm_directives = slurm_options.to_slurm_directives()
@@ -58,7 +89,7 @@ class ClepsSSHWrapper:
 {slurm_directives}
 
 source ~/.bashrc
-{env_cmd if env_cmd is not None else ""}
+conda activate {env_name}
 
 {run_cmd} {"${SLURM_ARRAY_TASK_ID}" if sbatch_options.array else ""}
 """

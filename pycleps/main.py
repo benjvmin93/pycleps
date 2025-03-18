@@ -41,7 +41,8 @@ def main():
     parser.add_argument("--repo", required=True, help="Repository address (e.g., git@github.com:user/repo.git)")
     parser.add_argument("--wd", default=".", help="Working directory where the git repo will be copied (default: '.')")
     parser.add_argument("--script", required=True, help="The command that will be used to run your script")
-    parser.add_argument("--env", required=False, help="The command that will be used to set your jobs in the right environment. The environment should already be created within the cluster.")
+    parser.add_argument("--env", required=False, help="The path of the environment file used to set up your environment. Must be a .yml file. Conda will be used to create or reuse the environment")
+    parser.add_argument("--setup", required=False, help="The command used inside your environment to install all the required packages")
     parser.add_argument("--cpus-per-task", default="", required=False, help="Number of cpus required to run your simulations")
     parser.add_argument("--wait", required=False, action='store_true', help="Whether or not the program will wait for job to end before exiting")
     parser.add_argument("--array", required=False, help="Different parameters to run your experiments with in parallel. Either a list of arguments a,b,c or a range a-b")
@@ -53,7 +54,8 @@ def main():
     repo_addr = args.repo
     working_dir = args.wd
     script = args.script
-    env_cmd = args.env
+    env_file = args.env
+    env_install_cmd = args.setup
     cpus_per_tasks = args.cpus_per_task
     array = args.array
 
@@ -90,6 +92,7 @@ def main():
     try:
         # Clone the repository
         client.clone_repo(repo_addr=repo_addr, dst_dir=repo_path)
+        env_name = client.setup_env(env_file, env_install_cmd)
 
         # Define Slurm options
         outputs = repo_path / "outputs"
@@ -106,7 +109,7 @@ def main():
             working_dir=repo_path,
             slurm_options=slurm_options,
             sbatch_options=sbatch_options,
-            env_cmd=env_cmd
+            env_name=env_name
         )
 
 
