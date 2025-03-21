@@ -13,9 +13,10 @@ import time
 # argcomplete
 
 class ClepsSSHWrapper:
-    def __init__(self, hostname: str, wd: Path, username: str | None = None, public_key: str = None):
+    def __init__(self, hostname: str, wd: Path, username: str | None = None, password: str | None = None):
         """
         Init an SSH client connected to the given host.
+        Authenticate using your SSH key added to the SSH agent.
         Additionally, creates the working directory within the ssh session.
         """
         if not username:
@@ -24,14 +25,15 @@ class ClepsSSHWrapper:
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-        password = getpass("Enter your Cleps password: ")
-        client.connect(hostname=hostname, username=username, password=password)
+        # password = getpass("Enter your Cleps password: ")
+        try:
+            client.connect(hostname=hostname, username=username, password=password, look_for_keys=True)    # Look for your key added to the ssh agent
+        except Exception as e:
+            raise Exception(e)
 
         self.client = client
         self.username = username
         self.wd = wd
-
-        self.exec_cmd(f"mkdir -p {wd}")  # Creates working directory if doesn't exist
 
     def exec_cmd(self, cmd: str) -> str:
         """"
@@ -40,12 +42,11 @@ class ClepsSSHWrapper:
         Returns the return of stdout as a string.
         """
         _, stdout, stderr = self.client.exec_command(cmd)
-
-        err = stderr.read().decode()
+        err = stderr.read()
         if err:
             raise Exception(err)
 
-        return stdout.read().decode()
+        return str(stdout.read())
 
     def setup_env(self, env_install_cmd: str, repo_path: Path, env_name: str, env_file: Path = None) -> None:
         """
@@ -67,6 +68,7 @@ class ClepsSSHWrapper:
 
     def clone_repo(self, repo_addr: str | Path, dst_dir: Path = "~/", git_branch: str = None) -> None:
         """Clone repository from github or transfer it from your machine to the cluster"""
+        self.exec_cmd(f"mkdir -p {self.wd}")  # Creates working directory if doesn't exist
         if repo_addr.startswith("git@github.com") or repo_addr.startswith("https://"):  # Clone repo from github
             print("Cloning repository from Github...")
             repo_name = repo_addr.split("/")[-1].replace(".git", "")
