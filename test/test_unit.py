@@ -3,24 +3,25 @@ from ParamikoMock import SSHCommandMock, ParamikoMockEnviron, SSHClientMock
 from unittest.mock import patch
 from pycleps.cleps_ssh_wrapper import ClepsSSHWrapper
 
+USERNAME = "root"
+PASSWORD = "root"
+HOSTNAME = "cleps.inria.fr"
+
+def add_response(mock: ParamikoMockEnviron, responses: dict[str, 'SSHResponseMock']) -> None:
+    mock.add_responses_for_host(HOSTNAME, 22, responses, USERNAME, PASSWORD)
+
 @pytest.fixture
 def mock_env():
     return ParamikoMockEnviron()
 
 def test_init_echo(mock_env):
-    username = "root"
-    password = "root"
-    hostname = "cleps.inria.fr"
-    
-    mock_env.add_responses_for_host(
-        hostname, 22, {"re(^echo .*?$)": SSHCommandMock("", "hello", "")}, username, password
-    )
+    add_response(mock_env, {"re(^echo .*?$)": SSHCommandMock("", "hello", "")})
 
     with patch("pycleps.cleps_ssh_wrapper.paramiko.SSHClient", new=SSHClientMock):
-        wrapper = ClepsSSHWrapper(hostname=hostname, wd=".", username=username, password=password)
+        wrapper = ClepsSSHWrapper(hostname=HOSTNAME, wd=".", username=USERNAME, password=PASSWORD)
         output = wrapper.exec_cmd("echo hello")
         
         assert output == "hello"  # Ensure expected output
-        mock_env.assert_command_was_executed(hostname, 22, "echo hello")
+        mock_env.assert_command_was_executed(HOSTNAME, 22, "echo hello")
 
     mock_env.cleanup_environment()
