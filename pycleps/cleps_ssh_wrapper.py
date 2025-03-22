@@ -46,7 +46,7 @@ class ClepsSSHWrapper:
         if err:
             raise Exception(err)
 
-        return str(stdout.read())
+        return stdout.read()
 
     def setup_env(self, env_install_cmd: str, repo_path: Path, env_name: str, env_file: Path = None) -> None:
         """

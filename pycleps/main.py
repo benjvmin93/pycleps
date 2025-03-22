@@ -60,7 +60,7 @@ def main():
     env_name = args.name
     env_file = args.env
     env_install_cmd = args.setup
-    cpus_per_tasks = args.cpus_per_task
+    cpus_per_tasks = args.cpt
     array = args.array
 
     if array:
