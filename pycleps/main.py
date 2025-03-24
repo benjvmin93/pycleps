@@ -78,14 +78,11 @@ def main():
     if args.wait:
         wait = True
 
-    repo_name = repo_addr   # Parse repository name
     is_git_repo = False
     if repo_addr.startswith("https://") or repo_addr.startswith("git@github.com"):
-        repo_name = repo_addr.split("/")[-1].replace(".git", "")
         is_git_repo = True
-    else:
-        repo_name = "".join(repo_name.split("/")).strip()
-
+    
+    repo_name = Path(repo_addr).name.replace(".git", "")
     working_dir = Path(working_dir)
     repo_path = working_dir / repo_name
 
@@ -94,7 +91,7 @@ def main():
 
     try:
         # Clone the repository
-        client.clone_repo(repo_addr=repo_addr, dst_dir=repo_path)
+        client.clone_repo(repo_addr=repo_addr, dst_dir=repo_path, git_branch=branch_name)
 
         # Setup the environment (create a new one and install all the dependencies once)
         client.setup_env(env_install_cmd=env_install_cmd, env_file=env_file, env_name=env_name, repo_path=repo_path)
