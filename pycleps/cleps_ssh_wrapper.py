@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(filename='pycleps.log', encoding='utf-8', level=logging.DEBUG)
 
 class ClepsSSHWrapper:
-    def __init__(self, hostname: str, wd: Path, username: str | None = None, password: str | None = None):
+    def __init__(self, wd: Path, username: str | None = None):
         """
         Init an SSH client connected to the given host.
         Authenticate using your SSH key added to the SSH agent.
@@ -31,8 +31,9 @@ class ClepsSSHWrapper:
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
-            client.connect(hostname=hostname, username=username, password=password, look_for_keys=True)    # Look for your key added to the ssh agent
-            logger.info(f"Connected to {hostname}")
+            client.connect(hostname="cleps.inria.fr", username=username, password=password, look_for_keys=True)    # Look for your key added to the ssh agent
+            logger.info(f"Connected to cleps.inria.fr as {username}")
+            logger.info(f"{self.exec_cmd('pwd')}")
         except Exception as e:
             logger.exception(e)
             raise Exception(e)

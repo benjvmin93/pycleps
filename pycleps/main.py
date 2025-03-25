@@ -87,7 +87,7 @@ def main():
     repo_path = working_dir / repo_name
 
     # Initialize ClepsSSHWrapper
-    client = ClepsSSHWrapper("cleps.inria.fr", username=username, wd=working_dir)
+    client = ClepsSSHWrapper(username=username, wd=working_dir)
 
     try:
         # Clone the repository
