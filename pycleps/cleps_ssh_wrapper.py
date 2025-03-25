@@ -47,7 +47,7 @@ class ClepsSSHWrapper:
         Raises Exception if stderr is triggered.
         Returns the return of stdout as a string.
         """
-        logger.info(f"Sending command `{cmd}`.")
+        logger.debug(f"Sending command `{cmd}`.")
         _, stdout, stderr = self.client.exec_command(cmd)
         err = stderr.read()
         if err:
@@ -57,9 +57,12 @@ class ClepsSSHWrapper:
             else:
                 err = err.decode()
 
-        out = stdout.read()
-        if not isinstance(out, str):
-            out = out.decode()
+        out = stdout
+        if isinstance(out, str):
+            out = out.read()
+        else:
+            out = out.read().decode()
+
         logger.info(out)
         return out
 

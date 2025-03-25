@@ -48,6 +48,7 @@ def main():
     parser.add_argument("--cpt", default="", required=False, help="Number of cpus required to run your simulations")
     parser.add_argument("--wait", required=False, action='store_true', help="Whether or not the program will wait for job to end before exiting")
     parser.add_argument("--array", required=False, help="Different parameters to run your experiments with in parallel. Either a list of arguments a,b,c or a range a-b")
+    parser.add_argument("--time", default="", required=False, help="Time limit to run your simulations. Acceptable time formats include 'minutes', 'minutes:seconds', 'hours:minutes:seconds', 'days-hours', 'days-hours:minutes' and 'days-hours:minutes:seconds'.")
 
     args = parser.parse_args()
 
@@ -62,6 +63,7 @@ def main():
     env_install_cmd = args.setup
     cpus_per_tasks = args.cpt
     array = args.array
+    time = args.time
 
     if array:
         if "-" in array:    # If range
@@ -103,6 +105,7 @@ def main():
             job_name=repo_name,
             cpus_per_task=cpus_per_tasks,
             output=outputs,
+            time=time
         )
         # Define Sbatch headers
         sbatch_options = SbatchHeader(array=array, wait=wait)
