@@ -165,4 +165,5 @@ conda activate {env_name}
                 scp.get(path, local_path)
                 file_paths.append(path)
 
-        print(f"{len(file_paths)} files have been successfully fetched:\n\t{'/n/t'.join(file_paths)}")
+        print(f"{len(file_paths)} files have been successfully fetched:\n")
+        print('\n\t'.join(file_paths))
