@@ -18,13 +18,13 @@ def mock_env():
 def ssh_wrapper(mock_env):
     """Creates a patched SSH wrapper instance."""
     with patch("pycleps.cleps_ssh_wrapper.paramiko.SSHClient", new=SSHClientMock):
-        return ClepsSSHWrapper(hostname=HOSTNAME, wd=".", username=USERNAME, password=PASSWORD)
+        return ClepsSSHWrapper(wd=".", username=USERNAME, password=PASSWORD)
 
 def test_init_echo(mock_env):
     add_response(mock_env, {"re(^echo .*?$)": SSHCommandMock("", "hello", "")})
     
     with patch("pycleps.cleps_ssh_wrapper.paramiko.SSHClient", new=SSHClientMock):
-        wrapper = ClepsSSHWrapper(hostname=HOSTNAME, wd=".", username=USERNAME, password=PASSWORD)
+        wrapper = ClepsSSHWrapper(wd=".", username=USERNAME, password=PASSWORD)
         output = wrapper.exec_cmd("echo hello")
         assert output == "hello"  # Ensure expected output
         mock_env.assert_command_was_executed(HOSTNAME, 22, "echo hello")   
@@ -45,7 +45,7 @@ def test_clone_repo(mock_env, repo_url):
     })
 
     with patch("pycleps.cleps_ssh_wrapper.paramiko.SSHClient", new=SSHClientMock):
-        wrapper = ClepsSSHWrapper(hostname=HOSTNAME, wd=wd, username=USERNAME, password=PASSWORD)
+        wrapper = ClepsSSHWrapper(wd=wd, username=USERNAME, password=PASSWORD)
         wrapper.clone_repo(repo_url, dst_dir)
 
         mock_env.assert_command_was_executed(HOSTNAME, 22, git_clone_cmd)
@@ -69,7 +69,7 @@ def test_clone_repo_already_existing(mock_env):
     })
 
     with patch("pycleps.cleps_ssh_wrapper.paramiko.SSHClient", new=SSHClientMock):
-        wrapper = ClepsSSHWrapper(hostname=HOSTNAME, wd=".", username=USERNAME, password=PASSWORD)
+        wrapper = ClepsSSHWrapper(wd=".", username=USERNAME, password=PASSWORD)
         wrapper.exec_cmd("mkdir ~/repo")
 
         # Expect exception handling, but no crash
@@ -97,7 +97,7 @@ def test_clone_repo_with_branch(mock_env):
     })
 
     with patch("pycleps.cleps_ssh_wrapper.paramiko.SSHClient", new=SSHClientMock):
-        wrapper = ClepsSSHWrapper(hostname=HOSTNAME, wd=".", username=USERNAME, password=PASSWORD)
+        wrapper = ClepsSSHWrapper(wd=".", username=USERNAME, password=PASSWORD)
         wrapper.clone_repo(repo_url, dst_dir, git_branch)
 
         mock_env.assert_command_was_executed(HOSTNAME, 22, git_clone_cmd)

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(filename='pycleps.log', encoding='utf-8', level=logging.DEBUG)
 
 class ClepsSSHWrapper:
-    def __init__(self, wd: Path, username: str | None = None):
+    def __init__(self, wd: Path, username: str | None = None, password: str | None = None):
         """
         Init an SSH client connected to the given host.
         Authenticate using your SSH key added to the SSH agent.
@@ -26,21 +26,20 @@ class ClepsSSHWrapper:
         """
         if not username:
             username = getuser()
-        client = paramiko.SSHClient()
-        client.load_system_host_keys()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        self.username = username
+        self.wd = wd
+
+        self.client = paramiko.SSHClient()
+        self.client.load_system_host_keys()
+        self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
-            client.connect(hostname="cleps.inria.fr", username=username, password=password, look_for_keys=True)    # Look for your key added to the ssh agent
+            self.client.connect(hostname="cleps.inria.fr", username=self.username, password=password, look_for_keys=True)    # Look for your key added to the ssh agent
             logger.info(f"Connected to cleps.inria.fr as {username}")
-            logger.info(f"{self.exec_cmd('pwd')}")
         except Exception as e:
             logger.exception(e)
             raise Exception(e)
-
-        self.client = client
-        self.username = username
-        self.wd = wd
 
     def exec_cmd(self, cmd: str) -> str:
         """"
@@ -50,12 +49,17 @@ class ClepsSSHWrapper:
         """
         logger.info(f"Sending command `{cmd}`.")
         _, stdout, stderr = self.client.exec_command(cmd)
-        err = stderr.read().decode()
+        err = stderr.read()
         if err:
-            logger.error(err)
-            raise Exception(err)
+            if isinstance(err, str):
+                logger.error(err)
+                raise Exception(err)
+            else:
+                err = err.decode()
 
-        out = stdout.read().decode()
+        out = stdout.read()
+        if not isinstance(out, str):
+            out = out.decode()
         logger.info(out)
         return out
 
