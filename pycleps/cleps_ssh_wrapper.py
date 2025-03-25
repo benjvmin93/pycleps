@@ -57,11 +57,9 @@ class ClepsSSHWrapper:
             else:
                 err = err.decode()
 
-        out = stdout
-        if isinstance(out, str):
-            out = out.read()
-        else:
-            out = out.read().decode()
+        out = stdout.read()
+        if not isinstance(err, str):
+            out = out.decode()
 
         logger.info(out)
         return out
