@@ -11,7 +11,7 @@ Run `pip install .`
 
 ```
 pycleps [-h] [--username USERNAME] --repo REPO [--wd WD] --script SCRIPT [--env ENV]
-               [--cpus-per-task CPUS_PER_TASK] [--wait] [--array ARRAY]
+               [--cpus-per-task CPUS_PER_TASK] [--wait] [--array ARRAY] [--time TIME]
 ```
 
 You can run your simulations located either on Github or on your local machine.
@@ -22,3 +22,4 @@ You can run your simulations located either on Github or on your local machine.
 - `--env` is the command that will be used to put you in the right environment for your experiment
 - `--wait` will not exit the program until your simulation is not done. If this flag is set, pycleps will automatically fetch your experiment's results when they are done.
 - `--array` is an options to specify different parameters for your experiments. It will create multiple tasks with these different arguments. Can either be a range a-b or a list form 1,2,3,4,...
+- `--time` is the time limit for running your simulations. 
