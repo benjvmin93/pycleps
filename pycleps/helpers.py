@@ -64,7 +64,7 @@ class SlurmOptions:
         directives = [
             f"#SBATCH --{key}={value}"
             for key, value in options_dict.items()
-            if value != "" and value != None
+            if value != "" and value is not None
         ]
         return "\n".join(directives)
 

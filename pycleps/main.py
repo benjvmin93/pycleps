@@ -42,7 +42,7 @@ def validate_numbers(input_list: list[str]):
 def github_branches(prefix, parsed_args, **kwargs):
     repo = parsed_args.repo
     branches = None
-    if not ".git" in repo:  # Is a local directory
+    if ".git" not in repo:  # Is a local directory
         repo = Path(repo)
         cmd = f"git -C {str(repo)} branch -a"
         if prefix != "":

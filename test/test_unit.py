@@ -1,5 +1,10 @@
 import pytest
-from ParamikoMock import SSHCommandMock, ParamikoMockEnviron, SSHClientMock
+from ParamikoMock import (
+    SSHCommandMock,
+    ParamikoMockEnviron,
+    SSHClientMock,
+    SSHResponseMock,
+)
 from unittest.mock import patch
 from pycleps.cleps_ssh_wrapper import ClepsSSHWrapper
 
@@ -9,7 +14,7 @@ HOSTNAME = "cleps.inria.fr"
 
 
 def add_response(
-    mock: ParamikoMockEnviron, responses: dict[str, "SSHResponseMock"]
+    mock: ParamikoMockEnviron, responses: dict[str, SSHResponseMock]
 ) -> None:
     mock.add_responses_for_host(HOSTNAME, 22, responses, USERNAME, PASSWORD)
 

@@ -115,7 +115,6 @@ class ClepsSSHWrapper:
         if repo_addr.startswith("git@github.com") or repo_addr.startswith(
             "https://"
         ):  # Clone repo from github
-            repo_name = repo_addr.split("/")[-1].replace(".git", "")
             cmd = f"git clone {repo_addr} {dst_dir}"
             print(f"Cloning repository {repo_addr}")
             try:
@@ -172,7 +171,6 @@ conda activate {env_name}
     def get_output(self, repo_path: Path, jobId: str) -> list[tuple[str, Path]]:
         """Get the stdout paths of each scheduled tasks according to the job id. Used when we waited for the job to complete."""
         out = self.exec_cmd(f"scontrol show job {jobId}")
-        ids = []
 
         # Use regex to find all ArrayTaskId and StdOut pairs
         task_info = re.findall(r"ArrayTaskId=(\d+).*?StdOut=(\S+)", out, re.DOTALL)
