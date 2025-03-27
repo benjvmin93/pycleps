@@ -10,8 +10,6 @@ import io
 import re
 import time
 
-# argcomplete
-
 import logging
 
 logger = logging.getLogger(__name__)
