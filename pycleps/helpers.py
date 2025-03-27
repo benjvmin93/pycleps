@@ -1,8 +1,20 @@
 class SlurmOptions:
     """A helper class to generate SLURM configuration directives."""
-    def __init__(self, array: bool = False, job_name: str = "", time: str = "", partition: str = "", nodes: int = 1, ntasks_per_node: int = 1,
-                 cpus_per_task: int = 1, memory: str = "", output: str = "",
-                 error: str = "", other_options: dict[str, str] = {}):
+
+    def __init__(
+        self,
+        array: bool = False,
+        job_name: str = "",
+        time: str = "",
+        partition: str = "",
+        nodes: int = 1,
+        ntasks_per_node: int = 1,
+        cpus_per_task: int = 1,
+        memory: str = "",
+        output: str = "",
+        error: str = "",
+        other_options: dict[str, str] = {},
+    ):
         """
         Initialize SLURM options.
 
@@ -49,14 +61,28 @@ class SlurmOptions:
             "error": self.error,
         }
         options_dict.update(self.other_options)
-        directives = [ f"#SBATCH --{key}={value}" for key, value in options_dict.items() if value != "" and value != None ]
+        directives = [
+            f"#SBATCH --{key}={value}"
+            for key, value in options_dict.items()
+            if value != "" and value != None
+        ]
         return "\n".join(directives)
+
 
 class SbatchHeader:
     """A helper class to generate sbatch command-line options."""
-    def __init__(self, array: list[int] | list[float], account: str = "", qos: str = None,
-                 dependency: str = "", mail_user: str = "",
-                 mail_type: str = None, wait: bool = False, other_options: dict[str, str] = None):
+
+    def __init__(
+        self,
+        array: list[int] | list[float],
+        account: str = "",
+        qos: str = None,
+        dependency: str = "",
+        mail_user: str = "",
+        mail_type: str = None,
+        wait: bool = False,
+        other_options: dict[str, str] = None,
+    ):
         """
         Initialize sbatch command-line options.
 

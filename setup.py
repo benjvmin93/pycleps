@@ -11,7 +11,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 setup(
     name="pycleps",
     version="0.1.0",
-    author="Benjamin", 
+    author="Benjamin",
     description="A tool to submit SLURM jobs to INRIA clusters using SSH.",
     long_description=long_description,
     long_description_content_type="text/markdown",
