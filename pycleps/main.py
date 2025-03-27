@@ -45,14 +45,15 @@ def github_branches(prefix, parsed_args, **kwargs):
     if ".git" not in repo:  # Is a local directory
         repo = Path(repo)
         cmd = f"git -C {str(repo)} branch -a"
-        if prefix != "":
-            cmd = f"{cmd} | grep {prefix}"
         try:
             p = subprocess.run(cmd.split(), capture_output=True, text=True)
             branches = p.stdout
         except Exception as e:
             raise Exception(e)
         branches = branches.splitlines()
+        branches = [
+            b for b in branches if prefix in b
+        ]
         branches = [
             b.strip() if "*" not in b else b.replace("*", "").strip() for b in branches
         ]
