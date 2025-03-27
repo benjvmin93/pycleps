@@ -1,9 +1,10 @@
 # PYTHON_ARGCOMPLETE_OK
-import argcomplete, argparse
+import argcomplete
+import argparse
+import subprocess
 from pycleps.cleps_ssh_wrapper import ClepsSSHWrapper
 from pathlib import Path
 from pycleps.helpers import SlurmOptions, SbatchHeader
-import asyncio
 
 def validate_numbers(input_list: list[str]):
     """
@@ -40,8 +41,11 @@ def github_branches(prefix, parsed_args, **kwargs):
     branches = None
     if not ".git" in repo:  # Is a local directory
         repo = Path(repo)
+        cmd = f"git -C {str(repo)} branch -a"
+        if prefix != "":
+            cmd = f"{cmd} | grep {prefix}"
         try:
-            p = subprocess.run(["git", "-C", str(repo), "-a", "|", "grep", prefix], capture_output=True, text=True)
+            p = subprocess.run(cmd.split(), capture_output=True, text=True)
             branches = p.stdout
         except Exception as e:
             raise Exception(e)
