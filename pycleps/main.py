@@ -5,7 +5,12 @@ import subprocess
 from pycleps.cleps_ssh_wrapper import ClepsSSHWrapper
 from pathlib import Path
 from pycleps.helpers import SlurmOptions, SbatchHeader
+from git import Repo
+import logging
 
+logging.basicConfig(filename="pycleps.log", encoding="utf-8", level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 def validate_numbers(input_list: list[str]):
     """
@@ -40,24 +45,8 @@ def validate_numbers(input_list: list[str]):
 
 
 def github_branches(prefix, parsed_args, **kwargs): # TODO: use git python module 
-    repo = parsed_args.repo
-    branches = None
-    if ".git" not in repo:  # Is a local directory
-        repo = Path(repo)
-        cmd = f"git -C {str(repo)} branch -a"
-        try:
-            p = subprocess.run(cmd.split(), capture_output=True, text=True)
-            branches = p.stdout
-        except Exception as e:
-            raise Exception(e)
-        branches = branches.splitlines()
-        branches = [
-            b for b in branches if prefix in b
-        ]
-        branches = [
-            b.strip() if "*" not in b else b.replace("*", "").strip() for b in branches
-        ]
-        return branches
+    branches = Repo(parsed_args.repo).branches
+    return [str(b) for b in branches]
 
 
 def main():
