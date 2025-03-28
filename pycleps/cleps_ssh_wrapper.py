@@ -10,8 +10,6 @@ import re
 import logging
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename="pycleps.log", encoding="utf-8", level=logging.DEBUG)
-
 
 class ClepsSSHWrapper:
     def __init__(
@@ -32,17 +30,12 @@ class ClepsSSHWrapper:
         self.client.load_system_host_keys()
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-        try:
-            self.client.connect(
-                hostname="cleps.inria.fr",
-                username=self.username,
-                password=password,
-                look_for_keys=True,
-            )  # Look for your key added to the ssh agent
-            logger.info(f"Connected to cleps.inria.fr as {username}")
-        except Exception as e:
-            logger.exception(e)
-            raise Exception(e)
+        self.client.connect(
+            hostname="cleps.inria.fr",
+            username=self.username,
+            password=password,
+            look_for_keys=True,
+        )  # Look for your key added to the ssh agent
 
     def exec_cmd(self, cmd: str) -> str:
         """
