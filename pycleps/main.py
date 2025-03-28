@@ -39,7 +39,7 @@ def validate_numbers(input_list: list[str]):
     return [int(x) for x in input_list] if all_ints else [float(x) for x in input_list]
 
 
-def github_branches(prefix, parsed_args, **kwargs):
+def github_branches(prefix, parsed_args, **kwargs): # TODO: use git python module 
     repo = parsed_args.repo
     branches = None
     if ".git" not in repo:  # Is a local directory
@@ -168,51 +168,46 @@ def main():
     # Initialize ClepsSSHWrapper
     client = ClepsSSHWrapper(username=username, wd=working_dir)
 
-    try:
-        # Clone the repository
-        client.clone_repo(
-            repo_addr=repo_addr, dst_dir=repo_path, git_branch=branch_name
+    # Clone the repository
+    client.clone_repo(
+        repo_addr=repo_addr, dst_dir=repo_path, git_branch=branch_name
+    )
+    # Setup the environment (create a new one and install all the dependencies once)
+    client.setup_env(
+        env_install_cmd=env_install_cmd,
+        env_file=env_file,
+        env_name=env_name,
+        repo_path=repo_path,
+    )
+    # Define Slurm options
+    outputs = repo_path / "outputs"
+    slurm_options = SlurmOptions(
+        array=True if array else False,
+        job_name=repo_name,
+        cpus_per_task=cpus_per_tasks,
+        output=outputs,
+        time=time,
+    )
+    # Define Sbatch headers
+    sbatch_options = SbatchHeader(array=array, wait=wait)
+    # Send job to the cluster
+    jobId = client.send_job(
+        run_cmd=script,
+        working_dir=repo_path,
+        slurm_options=slurm_options,
+        sbatch_options=sbatch_options,
+        env_name=env_name,
+    )
+    if wait:  # If slurm waited for the jobs to end, we can directly fetch the results with scp
+        output_paths = client.get_output(repo_path, jobId)
+        client.fetch_outputs(
+            jobs=output_paths,
+            local_path=f"{repo_name}/outputs/" if is_git_repo else repo_addr,
         )
-
-        # Setup the environment (create a new one and install all the dependencies once)
-        client.setup_env(
-            env_install_cmd=env_install_cmd,
-            env_file=env_file,
-            env_name=env_name,
-            repo_path=repo_path,
-        )
-
-        # Define Slurm options
-        outputs = repo_path / "outputs"
-        slurm_options = SlurmOptions(
-            array=True if array else False,
-            job_name=repo_name,
-            cpus_per_task=cpus_per_tasks,
-            output=outputs,
-            time=time,
-        )
-        # Define Sbatch headers
-        sbatch_options = SbatchHeader(array=array, wait=wait)
-
-        # Send job to the cluster
-        jobId = client.send_job(
-            run_cmd=script,
-            working_dir=repo_path,
-            slurm_options=slurm_options,
-            sbatch_options=sbatch_options,
-            env_name=env_name,
-        )
-
-        if wait:  # If slurm waited for the jobs to end, we can directly fetch the results with scp
-            output_paths = client.get_output(repo_path, jobId)
-            client.fetch_outputs(
-                jobs=output_paths,
-                local_path=f"{repo_name}/outputs/" if is_git_repo else repo_addr,
-            )
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
 
 
 def run():
-    main()
+    try:
+        main()
+    except Exception as e:
+        raise Exception(e)
