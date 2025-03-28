@@ -4,11 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pycleps"
-version = "0.0.0"
 description = "A tool to submit SLURM jobs to INRIA clusters using SSH."
 readme = "README.md"
 requires-python = ">= 3.9"
-
+dynamic = ["version", "dependencies", "optional-dependencies"]
 
 [project.scripts]
 pycleps = "pycleps.main:run"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.dynamic.optional-dependencies]
+dev = { file = ["requirements-dev.txt"] }
+extra = { file = ["requirements-extra.txt"] }

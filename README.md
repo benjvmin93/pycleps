@@ -14,6 +14,8 @@ pycleps [-h] [--username USERNAME] --repo REPO [--wd WD] --script SCRIPT [--env 
                [--cpus-per-task CPUS_PER_TASK] [--wait] [--array ARRAY] [--time TIME]
 ```
 
+Argument completion is implemented on Pycleps. You can try using it for giving the repository branch (locally specified) using `--branch <TAB>`.
+
 You can run your simulations located either on Github or on your local machine.
 
 - If on Github, specify the https web URL (yet, SSH is not configured for pycleps). Otherwise, specify the path of the repository within your environment.
