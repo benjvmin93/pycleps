@@ -1,3 +1,5 @@
+from pathlib import Path
+
 class SlurmOptions:
     """A helper class to generate SLURM configuration directives."""
 
@@ -38,11 +40,11 @@ class SlurmOptions:
         self.cpus_per_task = cpus_per_task
         self.memory = memory
         self.array = array
+        self.output: Path = Path(output)
         if array:
-            output = output / "%A_%a.log"
+            self.output = self.output / "%A_%a.log"
         else:
-            output = output / "%j.log"
-        self.output = output
+            self.output = self.output / "%j.log"
         self.error = error
         self.other_options = other_options or {}
 
@@ -76,12 +78,12 @@ class SbatchHeader:
         self,
         array: list[int] | list[float],
         account: str = "",
-        qos: str = None,
+        qos: str = "",
         dependency: str = "",
         mail_user: str = "",
-        mail_type: str = None,
+        mail_type: str = "",
         wait: bool = False,
-        other_options: dict[str, str] = None,
+        other_options: dict[str, str] = dict(),
     ):
         """
         Initialize sbatch command-line options.
