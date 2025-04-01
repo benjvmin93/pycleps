@@ -1,7 +1,6 @@
 # PYTHON_ARGCOMPLETE_OK
 import argcomplete
 import argparse
-import subprocess
 from pycleps.cleps_ssh_wrapper import ClepsSSHWrapper
 from pathlib import Path
 from pycleps.helpers import SlurmOptions, SbatchHeader
