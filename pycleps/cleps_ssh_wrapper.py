@@ -99,37 +99,38 @@ class ClepsSSHWrapper:
             print(e)
 
     def clone_repo(
-        self, repo_addr: str | Path, dst_dir: Path = "~/", git_branch: str = None
+        self, repo_addr: str | Path, dst_dir: Path = None, git_branch: str = None
     ) -> None:
-        """Clone repository from github or transfer it from your machine to the cluster"""
+        """Clone repository from github or transfer it from your machine to the cluster. If the repo already exists on the remote machine, does nothing."""
         self.exec_cmd(
             f"mkdir -p {self.wd}"
         )  # Creates working directory if doesn't exist
-        if repo_addr.startswith("git@github.com") or repo_addr.startswith(
+        if (repo_addr.startswith("git@github.com") or repo_addr.startswith(
             "https://"
-        ):  # Clone repo from github
-            cmd = f"git clone {repo_addr} {dst_dir}"
-            print(f"Cloning repository {repo_addr}")
-            try:
-                out = self.exec_cmd(cmd)
-                print(out)
-            except (
-                Exception
-            ) as e:  # Eventually, the repo already exists in the cluster machine
-                logger.exception(e)
+        )) and repo_addr.endswith(".git"):  # Clone repo from github
+            repo_name = repo_addr.split("/")[-1].replace(".git", "")
+            if dst_dir is None:
+                dst_dir = self.wd / repo_name
+            logger.info(self.exec_cmd(f"git clone {repo_addr} {dst_dir}"))
         else:  # Transfer the repo from local machine
+            if dst_dir is None:
+                if isinstance(repo_addr, Path):
+                    dst_dir = self.wd / repo_addr.name
+                else:
+                    dst_dir = self.wd / repo_addr.split("/")[-1]
+
             logger.info(f"Copying local repo {repo_addr} as {dst_dir}")
-            print(f"Copying directory {repo_addr} to {dst_dir}")
+            if not isinstance(repo_addr, Path):
+                repo_addr = Path(repo_addr)
             with SCPClient(self.client.get_transport()) as scp:
-                scp.put(Path(repo_addr), recursive=True, remote_path=dst_dir)
+                scp.put(repo_addr, recursive=True, remote_path=dst_dir)
 
         # Checkout if needed
-        if git_branch:
-            try:
-                out = self.exec_cmd(f"git -C {dst_dir} checkout {git_branch}")
-                print(out)
-            except Exception as e:
-                logger.debug(e)
+        if git_branch is not None:
+            self.exec_cmd(
+                f"git -C {dst_dir} checkout {git_branch}"
+            )
+            logger.info(f"Successfully checkout into {git_branch}")
 
     def send_job(
         self,

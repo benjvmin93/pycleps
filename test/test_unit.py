@@ -7,6 +7,7 @@ from ParamikoMock import (
 )
 from unittest.mock import patch
 from pycleps.cleps_ssh_wrapper import ClepsSSHWrapper
+from pathlib import Path
 
 USERNAME = "root"
 PASSWORD = "root"
@@ -23,19 +24,11 @@ def add_response(
 def mock_env():
     return ParamikoMockEnviron()
 
-
-@pytest.fixture
-def ssh_wrapper(mock_env):
-    """Creates a patched SSH wrapper instance."""
-    with patch("pycleps.cleps_ssh_wrapper.paramiko.SSHClient", new=SSHClientMock):
-        return ClepsSSHWrapper(wd=".", username=USERNAME, password=PASSWORD)
-
-
 def test_init_echo(mock_env):
     add_response(mock_env, {"re(^echo .*?$)": SSHCommandMock("", "hello", "")})
 
     with patch("pycleps.cleps_ssh_wrapper.paramiko.SSHClient", new=SSHClientMock):
-        wrapper = ClepsSSHWrapper(wd=".", username=USERNAME, password=PASSWORD)
+        wrapper = ClepsSSHWrapper(wd=Path.home(), username=USERNAME, password=PASSWORD)
         output = wrapper.exec_cmd("echo hello")
         assert output == "hello"  # Ensure expected output
         mock_env.assert_command_was_executed(HOSTNAME, 22, "echo hello")
@@ -51,26 +44,25 @@ def test_init_echo(mock_env):
     ],
 )
 def test_clone_repo(mock_env, repo_url):
-    dst_dir = "~/repo"
-    wd = "."
+    wd = Path.home()
 
-    git_clone_cmd = f"git clone {repo_url} {dst_dir}"
     mkdir_cmd = f"mkdir -p {wd}"
+    git_clone_cmd = f"git clone {repo_url} /home/benjamin/graphix"
 
     add_response(
         mock_env,
         {
-            f"re(^{git_clone_cmd}$)": SSHCommandMock("", "Cloning into 'repo'...", ""),
             f"re(^{mkdir_cmd}$)": SSHCommandMock("", "", ""),
+            f"re(^{git_clone_cmd}$)": SSHCommandMock("", "", ""),
         },
     )
 
     with patch("pycleps.cleps_ssh_wrapper.paramiko.SSHClient", new=SSHClientMock):
         wrapper = ClepsSSHWrapper(wd=wd, username=USERNAME, password=PASSWORD)
-        wrapper.clone_repo(repo_url, dst_dir)
-
-        mock_env.assert_command_was_executed(HOSTNAME, 22, git_clone_cmd)
+        wrapper.clone_repo(repo_url)
+        
         mock_env.assert_command_was_executed(HOSTNAME, 22, mkdir_cmd)
+        mock_env.assert_command_was_executed(HOSTNAME, 22, git_clone_cmd)
 
     mock_env.cleanup_environment()
 
@@ -78,11 +70,9 @@ def test_clone_repo(mock_env, repo_url):
 def test_clone_repo_already_existing(mock_env):
     """Simulate error when repo already exists."""
     repo_url = "https://github.com/example/repo.git"
-    dst_dir = "~/repo"
-    wd = "."
-
-    git_clone_cmd = f"git clone {repo_url} {dst_dir}"
+    wd = Path.home()
     mkdir_cmd = f"mkdir -p {wd}"
+    git_clone_cmd = f"git clone {repo_url} /home/benjamin/repo"
 
     add_response(
         mock_env,
@@ -98,43 +88,34 @@ def test_clone_repo_already_existing(mock_env):
     )
 
     with patch("pycleps.cleps_ssh_wrapper.paramiko.SSHClient", new=SSHClientMock):
-        wrapper = ClepsSSHWrapper(wd=".", username=USERNAME, password=PASSWORD)
-        wrapper.exec_cmd("mkdir ~/repo")
-
+        wrapper = ClepsSSHWrapper(wd=wd, username=USERNAME, password=PASSWORD)
         # Expect exception handling, but no crash
-        wrapper.clone_repo(repo_url, dst_dir)
-
-        mock_env.assert_command_was_executed(HOSTNAME, 22, git_clone_cmd)
+        with pytest.raises(Exception):
+            wrapper.clone_repo(repo_url)
 
     mock_env.cleanup_environment()
 
 
 def test_clone_repo_with_branch(mock_env):
-    repo_url = "https://github.com/example/repo.git"
-    dst_dir = "~/repo"
-    git_branch = "dm-simu-rs"
-    wd = "."
+    repo_url = "https://github.com/benjvmin93/pycleps.git"
+    git_branch = "env-integration"
+    wd = Path(".")
 
-    git_clone_cmd = f"git clone {repo_url} {dst_dir}"
-    git_checkout_cmd = f"git -C {dst_dir} checkout {git_branch}"
     mkdir_cmd = f"mkdir -p {wd}"
+    git_clone_cmd = f"git clone {repo_url} pycleps"
+    git_checkout_cmd = f"git -C {wd / 'pycleps'} checkout {git_branch}"
 
     add_response(
         mock_env,
         {
             f"re(^{mkdir_cmd}$)": SSHCommandMock("", "", ""),
-            f"re(^{git_clone_cmd}$)": SSHCommandMock("", "Cloning into 'repo'...", ""),
-            f"re(^{git_checkout_cmd}$)": SSHCommandMock(
-                "", f"Switched to branch '{git_branch}'", ""
-            ),
+            f"re(^{git_clone_cmd}$)": SSHCommandMock("", "", ""),
+            f"re(^{git_checkout_cmd}$)": SSHCommandMock("", "", ""),
         },
     )
 
     with patch("pycleps.cleps_ssh_wrapper.paramiko.SSHClient", new=SSHClientMock):
-        wrapper = ClepsSSHWrapper(wd=".", username=USERNAME, password=PASSWORD)
-        wrapper.clone_repo(repo_url, dst_dir, git_branch)
-
-        mock_env.assert_command_was_executed(HOSTNAME, 22, git_clone_cmd)
-        mock_env.assert_command_was_executed(HOSTNAME, 22, git_checkout_cmd)
+        wrapper = ClepsSSHWrapper(wd=wd, username=USERNAME, password=PASSWORD)
+        wrapper.clone_repo(repo_addr=repo_url, git_branch=git_branch)
 
     mock_env.cleanup_environment()

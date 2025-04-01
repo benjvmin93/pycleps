@@ -44,7 +44,7 @@ def validate_numbers(input_list: list[str]):
     return [int(x) for x in input_list] if all_ints else [float(x) for x in input_list]
 
 
-def github_branches(prefix, parsed_args, **kwargs): # TODO: use git python module 
+def github_branches(prefix, parsed_args, **kwargs):
     branches = Repo(parsed_args.repo).branches
     return [str(b) for b in branches]
 
@@ -155,7 +155,7 @@ def main():
     repo_path = working_dir / repo_name
 
     # Initialize ClepsSSHWrapper
-    client = ClepsSSHWrapper(username=username, wd=working_dir)
+    client = ClepsSSHWrapper(wd=working_dir, username=username)
 
     # Clone the repository
     client.clone_repo(
