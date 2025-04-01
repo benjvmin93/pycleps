@@ -11,6 +11,7 @@ logging.basicConfig(filename="pycleps.log", encoding="utf-8", level=logging.INFO
 
 logger = logging.getLogger(__name__)
 
+
 def validate_numbers(input_list: list[str]):
     """
     Validate that all elements in a list of strings are either all integers or all floats.
@@ -157,9 +158,7 @@ def main():
     client = ClepsSSHWrapper(wd=working_dir, username=username)
 
     # Clone the repository
-    client.clone_repo(
-        repo_addr=repo_addr, dst_dir=repo_path, git_branch=branch_name
-    )
+    client.clone_repo(repo_addr=repo_addr, dst_dir=repo_path, git_branch=branch_name)
     # Setup the environment (create a new one and install all the dependencies once)
     client.setup_env(
         env_install_cmd=env_install_cmd,

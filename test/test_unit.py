@@ -24,6 +24,7 @@ def add_response(
 def mock_env():
     return ParamikoMockEnviron()
 
+
 def test_init_echo(mock_env):
     add_response(mock_env, {"re(^echo .*?$)": SSHCommandMock("", "hello", "")})
 
@@ -60,7 +61,7 @@ def test_clone_repo(mock_env, repo_url):
     with patch("pycleps.cleps_ssh_wrapper.paramiko.SSHClient", new=SSHClientMock):
         wrapper = ClepsSSHWrapper(wd=wd, username=USERNAME, password=PASSWORD)
         wrapper.clone_repo(repo_url)
-        
+
         mock_env.assert_command_was_executed(HOSTNAME, 22, mkdir_cmd)
         mock_env.assert_command_was_executed(HOSTNAME, 22, git_clone_cmd)
 

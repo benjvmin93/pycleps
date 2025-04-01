@@ -11,6 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class ClepsSSHWrapper:
     def __init__(
         self, wd: Path, username: str | None = None, password: str | None = None
@@ -105,9 +106,9 @@ class ClepsSSHWrapper:
         self.exec_cmd(
             f"mkdir -p {self.wd}"
         )  # Creates working directory if doesn't exist
-        if (repo_addr.startswith("git@github.com") or repo_addr.startswith(
-            "https://"
-        )) and repo_addr.endswith(".git"):  # Clone repo from github
+        if (
+            repo_addr.startswith("git@github.com") or repo_addr.startswith("https://")
+        ) and repo_addr.endswith(".git"):  # Clone repo from github
             repo_name = repo_addr.split("/")[-1].replace(".git", "")
             if dst_dir is None:
                 dst_dir = self.wd / repo_name
@@ -127,9 +128,7 @@ class ClepsSSHWrapper:
 
         # Checkout if needed
         if git_branch is not None:
-            self.exec_cmd(
-                f"git -C {dst_dir} checkout {git_branch}"
-            )
+            self.exec_cmd(f"git -C {dst_dir} checkout {git_branch}")
             logger.info(f"Successfully checkout into {git_branch}")
 
     def send_job(
