@@ -70,7 +70,7 @@ def main():
     )
     parser.add_argument(
         "--script",
-        required=True,
+        required=False,
         help="The command that will be used to run your script",
     )
     parser.add_argument(
@@ -112,6 +112,12 @@ def main():
         required=False,
         help="Time limit to run your simulations. Acceptable time formats include 'minutes', 'minutes:seconds', 'hours:minutes:seconds', 'days-hours', 'days-hours:minutes' and 'days-hours:minutes:seconds'.",
     )
+    parser.add_argument(
+        "--fetch",
+        default=False,
+        required=False,
+        help="Pycleps feature used to fetch a job given by its id. If the fetch option is passed with a job id, you need to pass the repo path on the cluster to be able to find the simulation outputs"
+    )
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -128,6 +134,8 @@ def main():
     cpus_per_tasks = args.cpt
     array = args.array
     time = args.time
+    fetch_id = args.fetch
+    wait = args.wait
 
     if array:
         if "-" in array:  # If range
@@ -142,10 +150,6 @@ def main():
             array = array.split(",")
             array = validate_numbers(array)
 
-    wait = False
-    if args.wait:
-        wait = True
-
     is_git_repo = False
     if repo_addr.startswith("https://") or repo_addr.startswith("git@github.com"):
         is_git_repo = True
@@ -157,6 +161,13 @@ def main():
     # Initialize ClepsSSHWrapper
     client = ClepsSSHWrapper(wd=working_dir, username=username)
 
+    if fetch_id:
+        if repo_addr is None:
+            err_msg = "You must provide the remote repository path with the job id in order to fetch the results."
+            logger.error(err_msg)
+            raise Exception(err_msg)
+        return client.fetch(jobId=fetch_id, remote_path=repo_addr)
+        
     # Clone the repository
     client.clone_repo(repo_addr=repo_addr, dst_dir=repo_path, git_branch=branch_name)
     # Setup the environment (create a new one and install all the dependencies once)

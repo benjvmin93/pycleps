@@ -161,6 +161,19 @@ conda activate {env_name}
         jobId = splitted[-1].strip(" \n")
         return jobId
 
+    def fetch(self, jobId: str, remote_path: Path) -> None:
+        """Copy the output(s) of a job given by its id and the remote path in which the outputs are stored."""
+        out = self.exec_cmd(f"ls {remote_path}/outputs").split()
+
+        files = [f"{remote_path}/outputs/{n}" for n in out if jobId in n]
+
+        logger.info(f"Fetching {len(files)} files")
+        with SCPClient(self.client.get_transport()) as scp:
+            for f in files:
+                scp.get(f)
+
+            print("Successfully fetched\n", "\n\t".join(files))
+
     def get_output(self, repo_path: Path, jobId: str) -> list[tuple[str, Path]]:
         """Get the stdout paths of each scheduled tasks according to the job id. Used when we waited for the job to complete."""
         out = self.exec_cmd(f"scontrol show job {jobId}")
