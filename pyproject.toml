@@ -10,7 +10,7 @@ requires-python = ">= 3.9"
 dynamic = ["version", "dependencies", "optional-dependencies"]
 
 [project.scripts]
-pycleps = "pycleps.main:run"
+pycleps = "pycleps.main:app"
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }

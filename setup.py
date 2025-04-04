@@ -26,7 +26,7 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "pycleps=pycleps.main:run",
+            "pycleps=pycleps.main:app",
         ],
     },
 )
