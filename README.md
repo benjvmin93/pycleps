@@ -13,8 +13,8 @@ Run `pip install .`
 Usage: pycleps [OPTIONS] COMMAND [ARGS]...
 
 Commands:
-    submit
-    fetch
+    submit: submit a job to Cleps with custom options.
+    fetch: download result output(s) of a specific job.
 
 - submit:
     --repo                   TEXT  Repository address (e.g., git@github.com:user/repo.git) [default: None] [required]
