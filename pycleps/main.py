@@ -166,8 +166,9 @@ def main():
             err_msg = "You must provide the remote repository path with the job id in order to fetch the results."
             logger.error(err_msg)
             raise Exception(err_msg)
-        return client.fetch(jobId=fetch_id, remote_path=repo_addr)
-        
+        client.fetch(jobId=fetch_id, remote_path=repo_addr)
+        return
+
     # Clone the repository
     client.clone_repo(repo_addr=repo_addr, dst_dir=repo_path, git_branch=branch_name)
     # Setup the environment (create a new one and install all the dependencies once)

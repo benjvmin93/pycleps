@@ -164,18 +164,33 @@ conda activate {env_name}
         jobId = splitted[-1].strip(" \n")
         return jobId
 
-    def fetch(self, jobId: str, remote_path: Path) -> None:
-        """Copy the output(s) of a job given by its id and the remote path in which the outputs are stored."""
-        out = self.exec_cmd(f"ls {remote_path}/outputs").split()
-
-        files = [f"{remote_path}/outputs/{n}".strip() for n in out if jobId in n]
-
+    def fetch(self, jobId: str, remote_path: Path) -> tuple[Path, str] | list[tuple[Path, str]]:
+        """
+        Copy the output(s) of a job given by its id and the remote path in which the outputs are stored on the local machine.
+        Returns the paths and outputs of the one or multiple jobs as a string or list of strings.
+        """
+        sftp_cli = self.client.open_sftp()
+        out = sftp_cli.listdir(str(remote_path / "outputs"))
+        files = [f"{remote_path}/outputs/{n}" for n in out if jobId in n]
         logger.info(f"Fetching {len(files)} files")
-        with SCPClient(self.client.get_transport()) as scp:
-            for f in files:
-                scp.get(f, Path("./outputs/"))
 
-            print("Successfully fetched:\n", "\n\t".join(files), sep="")
+        output_path = Path("./outputs/")
+        output_path.mkdir(exist_ok=True)
+
+        fetched = []
+
+        for file in files:
+            local_file_path = output_path / Path(file).name
+
+            sftp_cli.get(file, str(local_file_path))  
+
+            with open(local_file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+                fetched.append((local_file_path, content))
+
+        sftp_cli.close()
+
+        return fetched if len(fetched) > 1 else fetched[0]
 
     def get_output(self, repo_path: Path, jobId: str) -> list[tuple[str, Path]]:
         """Get the stdout paths of each scheduled tasks according to the job id. Used when we waited for the job to complete."""
