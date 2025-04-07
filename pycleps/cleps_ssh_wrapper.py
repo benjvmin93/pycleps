@@ -164,10 +164,10 @@ conda activate {env_name}
         jobId = splitted[-1].strip(" \n")
         return jobId
 
-    def fetch(self, jobId: str, remote_path: Path) -> tuple[Path, str] | list[tuple[Path, str]]:
+    def fetch(self, jobId: str, remote_path: Path) -> list[Path]:
         """
-        Copy the output(s) of a job given by its id and the remote path in which the outputs are stored on the local machine.
-        Returns the paths and outputs of the one or multiple jobs as a string or list of strings.
+        Fetch the output(s) of a job given by its id and the remote path in which the outputs are stored.
+        Returns the paths of the fetched outputs on the local machine.
         """
         sftp_cli = self.client.open_sftp()
         out = sftp_cli.listdir(str(remote_path / "outputs"))
@@ -183,14 +183,12 @@ conda activate {env_name}
             local_file_path = output_path / Path(file).name
 
             sftp_cli.get(file, str(local_file_path))  
-
-            with open(local_file_path, "r", encoding="utf-8") as f:
-                content = f.read()
-                fetched.append((local_file_path, content))
+            fetched.append(local_file_path)
 
         sftp_cli.close()
+        logger.info(f"{len(fetched)} file fetched.")
 
-        return fetched if len(fetched) > 1 else fetched[0]
+        return fetched
 
     def get_output(self, repo_path: Path, jobId: str) -> list[tuple[str, Path]]:
         """Get the stdout paths of each scheduled tasks according to the job id. Used when we waited for the job to complete."""
