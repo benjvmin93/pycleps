@@ -78,8 +78,7 @@ def submit(
     job_id = client.send_job(run_cmd=script, working_dir=repo_path, slurm_options=slurm_options, sbatch_options=sbatch_options, env_name=name)
     
     if wait:
-        output_paths = client.get_output(repo_path, job_id)
-        client.fetch_outputs(jobs=output_paths, local_path=f"{repo_name}/outputs/" if repo.startswith("https://") or repo.startswith("git@github.com") else repo)
+        client.fetch(job_id, repo_path)
 
 @app.command()
 def fetch(
