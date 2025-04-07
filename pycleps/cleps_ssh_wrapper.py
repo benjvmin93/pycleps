@@ -182,38 +182,10 @@ conda activate {env_name}
         for file in files:
             local_file_path = output_path / Path(file).name
 
-            sftp_cli.get(file, str(local_file_path))  
+            sftp_cli.get(file, str(local_file_path))
             fetched.append(local_file_path)
 
         sftp_cli.close()
         logger.info(f"{len(fetched)} file fetched.")
 
         return fetched
-
-    def get_output(self, repo_path: Path, jobId: str) -> list[tuple[str, Path]]:
-        """Get the stdout paths of each scheduled tasks according to the job id. Used when we waited for the job to complete."""
-        out = self.exec_cmd(f"scontrol show job {jobId}")
-
-        # Use regex to find all ArrayTaskId and StdOut pairs
-        task_info = re.findall(r"ArrayTaskId=(\d+).*?StdOut=(\S+)", out, re.DOTALL)
-        if not task_info:
-            # If no ArrayTaskId is found, fall back to single JobId and StdOut
-            task_info = re.findall(r"JobId=(\d+).*?StdOut=(\S+)", out, re.DOTALL)
-
-        if not task_info:
-            raise Exception(f"Error parsing scontrol output: {out}")
-
-        return [(id, path) for id, path in task_info]  # List of (id, stdout_path)
-
-    def fetch_outputs(
-        self, jobs: list[tuple[str, Path]], local_path: Path = "."
-    ) -> None:
-        print(f"Attempting to fetch {len(jobs)} results...")
-        file_paths = []
-        with SCPClient(self.client.get_transport()) as scp:
-            for job, path in jobs:
-                scp.get(path, local_path)
-                file_paths.append(path)
-
-        print(f"{len(file_paths)} files have been successfully fetched:\n")
-        print("\n\t".join(file_paths))
