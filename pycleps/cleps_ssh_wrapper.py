@@ -91,20 +91,23 @@ class ClepsSSHWrapper:
             logger.info(
                 f"Creating conda environment {env_name} with file {new_env_file_path}"
             )
-            print("Setting up your environment.")
-            out = self.exec_cmd(
+            self.exec_cmd(
                 f"conda env create -n {env_name} -f {new_env_file_path} -y"
             )  # Creates a new environment and erases the one with the same name if it exists
-            print(out)
 
-        # Install project dependencies.
-        try:
-            out = self.exec_cmd(
-                f"cd {repo_path} && conda activate {env_name} && {env_install_cmd}"
+        try:    # Activate environment and install project dependencies.  
+            self.exec_cmd(
+                f"conda activate {env_name}"
             )
-            print(out)
+        except Exception as e:  # If `env_name` environment doesn't exist, just pass and try to install dependencies with no conda env
+            logger.exception(e)
+
+        try:
+            self.exec_cmd(
+                f"cd {repo_path} && {env_install_cmd}"
+            )
         except Exception as e:
-            print(e)
+            logger.exception(e)
 
     def clone_repo(
         self, repo_addr: str | Path, dst_dir: Path = None, git_branch: str = None
@@ -193,11 +196,11 @@ conda activate {env_name}
     def fetch(self, jobId: str, remote_path: Path) -> list[Path]:
         """
         Fetch output logs of a job from the cluster.
-    
+
         Args:
             jobId: SLURM job ID.
             remote_path: Remote directory path.
-    
+
         Returns:
             list[Path]: List of local paths to fetched files.
         """
