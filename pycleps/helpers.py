@@ -1,7 +1,11 @@
 from pathlib import Path
 
 class SlurmOptions:
-    """A helper class to generate SLURM configuration directives."""
+    """
+    SLURM configuration options helper.
+
+    Converts class attributes into SLURM job directives.
+    """
 
     def __init__(
         self,
@@ -49,7 +53,12 @@ class SlurmOptions:
         self.other_options = other_options or {}
 
     def to_slurm_directives(self) -> str:
-        """Generate SLURM directives as a string."""
+        """
+        Generate SLURM directive strings for sbatch scripts.
+
+        Returns:
+            str: SLURM job directives as formatted string.
+        """
         output_suff = "%j.log" if not self.array else "%A_%a.log"
         options_dict = {
             "job-name": self.job_name,
@@ -72,8 +81,11 @@ class SlurmOptions:
 
 
 class SbatchHeader:
-    """A helper class to generate sbatch command-line options."""
+    """
+    Helper class for sbatch command-line options.
 
+    Handles array jobs, notifications, dependencies, and more.
+    """
     def __init__(
         self,
         array: list[int] | list[float],
@@ -109,7 +121,12 @@ class SbatchHeader:
         return self.to_sbatch_options()
 
     def to_sbatch_options(self) -> str:
-        """Generate sbatch command-line options as a string."""
+        """
+        Generate sbatch command-line options.
+
+        Returns:
+            str: A string of sbatch flags.
+        """
         options = []
         if self.array:
             options.append(f"--array={','.join([str(x) for x in self.array])}")

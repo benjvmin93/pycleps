@@ -13,14 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 class ClepsSSHWrapper:
+    """
+    SSH interface to interact with CLEPS cluster.
+
+    Manages repo cloning, environment setup, job submission, and result retrieval.
+    """
     def __init__(
         self, wd: Path, username: str | None = None, password: str | None = None
     ):
-        """
-        Init an SSH client connected to the given host.
-        Authenticate using your SSH key added to the SSH agent.
-        Additionally, creates the working directory within the ssh session.
-        """
         if not username:
             username = getuser()
 
@@ -40,9 +40,16 @@ class ClepsSSHWrapper:
 
     def exec_cmd(self, cmd: str) -> str:
         """
-        Execute a shell command inside the ssh session.
-        Raises Exception if stderr is triggered.
-        Returns the return of stdout as a string.
+        Execute a shell command via SSH.
+
+        Args:
+            cmd (str): Command string to execute.
+
+        Returns:
+            str: Command output from stdout.
+
+        Raises:
+            Exception: If there's any stderr output.
         """
         logger.debug(f"Sending command `{cmd}`.")
         _, stdout, stderr = self.client.exec_command(cmd)
@@ -102,7 +109,14 @@ class ClepsSSHWrapper:
     def clone_repo(
         self, repo_addr: str | Path, dst_dir: Path = None, git_branch: str = None
     ) -> None:
-        """Clone repository from github or transfer it from your machine to the cluster. If the repo already exists on the remote machine, does nothing."""
+        """
+        Clone or upload a repository to the cluster.
+
+        Args:
+            repo_addr: Git repository address or local path.
+            dst_dir: Remote directory to clone into (optional).
+            git_branch: Branch to checkout (optional).
+        """
         self.exec_cmd(
             f"mkdir -p {self.wd}"
         )  # Creates working directory if doesn't exist
@@ -142,7 +156,19 @@ class ClepsSSHWrapper:
         sbatch_options: SbatchHeader,
         env_name: str,
     ) -> str:
-        """Schedule a job that will run your script on the cluster and returns the job ID of your experiment."""
+        """
+        Submit a SLURM job to CLEPS.
+
+        Args:
+            run_cmd: Command to execute.
+            working_dir: Working directory on the cluster.
+            slurm_options: SLURM configuration.
+            sbatch_options: Additional sbatch options.
+            env_name: Name of conda environment to activate.
+
+        Returns:
+            str: SLURM job ID.
+        """
         slurm_script_path = working_dir / "slurm_job.sbatch"
         slurm_directives = slurm_options.to_slurm_directives()
         slurm_script = f"""#!/bin/bash
@@ -166,8 +192,14 @@ conda activate {env_name}
 
     def fetch(self, jobId: str, remote_path: Path) -> list[Path]:
         """
-        Fetch the output(s) of a job given by its id and the remote path in which the outputs are stored.
-        Returns the paths of the fetched outputs on the local machine.
+        Fetch output logs of a job from the cluster.
+    
+        Args:
+            jobId: SLURM job ID.
+            remote_path: Remote directory path.
+    
+        Returns:
+            list[Path]: List of local paths to fetched files.
         """
         sftp_cli = self.client.open_sftp()
         out = sftp_cli.listdir(str(remote_path / "outputs"))

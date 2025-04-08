@@ -12,6 +12,18 @@ logger = logging.getLogger(__name__)
 app = typer.Typer()
 
 def validate_numbers(input_list: list[str]):
+    """
+    Validate that the input list contains only numbers (all ints or all floats).
+
+    Args:
+        input_list (list[str]): List of strings representing numbers.
+
+    Returns:
+        list[int] | list[float]: Converted list of integers or floats.
+
+    Raises:
+        ValueError: If the list contains a mix of types or invalid values.
+    """
     def is_int(s):
         try:
             int(s)
@@ -35,6 +47,15 @@ def validate_numbers(input_list: list[str]):
     return [int(x) for x in input_list] if all_ints else [float(x) for x in input_list]
 
 def github_branches(repo: str):
+    """
+    Get all branches from a local Git repository.
+
+    Args:
+        repo (str): Path to the local Git repository.
+
+    Returns:
+        list[str]: A list of branch names.
+    """
     return [str(b) for b in Repo(repo).branches]
 
 @app.command()
@@ -52,6 +73,28 @@ def submit(
     array: Optional[str] = typer.Option(None, help="Parameters for parallel experiments (list or range)"),
     time: Optional[str] = typer.Option("", help="Time limit for simulations"),
 ):
+    """
+    Submit a job to the CLEPS cluster.
+
+    - Clones a Git repository.
+    - Sets up a conda environment and installs dependencies.
+    - Creates a SLURM job script and submits it.
+    - Optionally fetches the result when the job is done.
+
+    Args:
+        repo: Git repository address.
+        branch: Branch name (optional).
+        user: CLEPS username.
+        wd: Local working directory.
+        script: Script or command to run remotely.
+        env: Conda environment YAML file.
+        name: Environment name.
+        setup: Command to install dependencies.
+        cpt: Number of CPUs.
+        wait: Wait for job to finish before exiting.
+        array: Parallel jobs parameters (comma-separated list or a-b format).
+        time: SLURM job time limit.
+    """
     wd_path = Path(wd)
     repo_name = Path(repo).name.replace(".git", "")
     repo_path = wd_path / repo_name
@@ -86,6 +129,14 @@ def fetch(
     job_id: str = typer.Argument(..., help="Job ID to fetch results for"),
     user: Optional[str] = typer.Option(None, help="Your Cleps username"),
 ):
+    """
+    Fetch job results from the CLEPS cluster.
+
+    Args:
+        repo: Remote path on the cluster where job was executed.
+        job_id: SLURM job ID.
+        user: CLEPS username (optional).
+    """
     client = ClepsSSHWrapper(wd=Path(), username=user)
     client.fetch(jobId=job_id, remote_path=repo)
 
