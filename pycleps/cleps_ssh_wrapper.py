@@ -65,7 +65,8 @@ class ClepsSSHWrapper:
         if not isinstance(err, str):
             out = out.decode()
 
-        logger.info(out)
+        if out != "":
+            logger.info(out)
         return out
 
     def setup_env(
@@ -129,7 +130,7 @@ class ClepsSSHWrapper:
             repo_name = repo_addr.split("/")[-1].replace(".git", "")
             if dst_dir is None:
                 dst_dir = self.wd / repo_name
-            logger.info(self.exec_cmd(f"git clone {repo_addr} {dst_dir}"))
+            self.exec_cmd(f"git clone {repo_addr} {dst_dir}")
         else:  # Transfer the repo from local machine
             repo_addr = Path(repo_addr)
             if dst_dir is None:
