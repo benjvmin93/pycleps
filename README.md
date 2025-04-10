@@ -1,4 +1,7 @@
 # pycleps
+
+![ChatGPT Image Apr 10, 2025, 10_54_05 AM](https://github.com/user-attachments/assets/1f665a42-23eb-49ce-854a-ef7bd9cddf70)
+
 A python wrapper for sending jobs to Inria's cluster Cleps.
 
 Automate sending your simulations and getting the outputs. 
